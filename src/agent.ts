@@ -1,12 +1,13 @@
 import "dotenv/config";
 import OpenAI from "openai";
+import { loadConfig } from "./config.ts";
+
+const { baseURL, apiKey, model } = loadConfig();
 
 const client = new OpenAI({
-  baseURL: process.env.MIMOE_BASE_URL,
-  apiKey: process.env.MIMOE_API_KEY,
+  baseURL,
+  apiKey,
 });
-
-const model = process.env.MIMOE_MODEL!;
 
 const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
   {
@@ -144,7 +145,7 @@ const main = async () => {
 
     const finalContent = finalResponse.choices[0].message.content;
 
-    console.log("\nFinal answer:", formatAnswer(finalContent));
+    console.log("Final answer:", formatAnswer(finalContent));
 
     return;
   }
@@ -152,4 +153,9 @@ const main = async () => {
   console.log("Answer:", formatAnswer(assistantMessage.content));
 };
 
-await main();
+try {
+  await main();
+} catch (error) {
+  console.error("Agent failed:", error instanceof Error ? error.message : String(error));
+  process.exit(1);
+}
