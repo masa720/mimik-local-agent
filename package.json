@@ -1,0 +1,30 @@
+{
+  "name": "mimik-local-agent",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "agent": "tsx src/agent.ts",
+    "check": "npm run lint && npm run format:check",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "hello": "tsx src/hello.ts",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint --fix ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "dotenv": "^18.0.7",
+    "openai": "^7.32.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "oxlint": "^1.87.0",
+    "prettier": "^3.9.10",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}
