@@ -54,6 +54,37 @@ const calculate = (operation: string, a: number, b: number): number => {
   }
 };
 
+type CalculationArgs = {
+  operation: "add" | "subtract" | "multiply" | "divide";
+  a: number;
+  b: number;
+};
+
+const parseCalculationArgs = (input: string): CalculationArgs => {
+  const parsed: unknown = JSON.parse(input);
+
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("Invalid calculate arguments: expected an object.");
+  }
+
+  const { operation, a, b } = parsed as Record<string, unknown>;
+
+  if (
+    (operation !== "add" &&
+      operation !== "subtract" &&
+      operation !== "multiply" &&
+      operation !== "divide") ||
+    typeof a !== "number" ||
+    !Number.isFinite(a) ||
+    typeof b !== "number" ||
+    !Number.isFinite(b)
+  ) {
+    throw new Error("Invalid calculate arguments: expected an operation and two finite numbers.");
+  }
+
+  return { operation, a, b };
+};
+
 const plainFactor = (value: string): string => (/[+\-*/]/.test(value) ? `(${value})` : value);
 
 const formatAnswer = (content: string | null): string => {
@@ -110,32 +141,37 @@ const main = async () => {
 
     for (const toolCall of assistantMessage.tool_calls) {
       if (toolCall.type !== "function") {
-        continue;
+        throw new Error(`Unsupported tool type: ${toolCall.type}`);
       }
 
-      if (toolCall.function.name === "calculate") {
-        const args = JSON.parse(toolCall.function.arguments);
+      if (toolCall.function.name !== "calculate") {
+        throw new Error(`Unsupported tool: ${toolCall.function.name}`);
+      }
 
-        console.log("Tool called:", toolCall.function.name);
-        console.log("Arguments:", args);
+      const args = parseCalculationArgs(toolCall.function.arguments);
 
-        const key = JSON.stringify([args.operation, args.a, args.b]);
-        let result = resultCache.get(key);
+      console.log("Tool called:", toolCall.function.name);
+      console.log("Arguments:", args);
 
-        if (result === undefined) {
-          result = calculate(args.operation, args.a, args.b);
-          resultCache.set(key, result);
-          console.log("Tool result:", result);
-        } else {
-          console.log("Reused tool result:", result);
+      const key = JSON.stringify([args.operation, args.a, args.b]);
+      let result = resultCache.get(key);
+
+      if (result === undefined) {
+        result = calculate(args.operation, args.a, args.b);
+        if (!Number.isFinite(result)) {
+          throw new Error("Calculation produced a non-finite result.");
         }
-
-        messages.push({
-          role: "tool",
-          tool_call_id: toolCall.id,
-          content: JSON.stringify({ result }),
-        });
+        resultCache.set(key, result);
+        console.log("Tool result:", result);
+      } else {
+        console.log("Reused tool result:", result);
       }
+
+      messages.push({
+        role: "tool",
+        tool_call_id: toolCall.id,
+        content: JSON.stringify({ result }),
+      });
     }
 
     const finalResponse = await client.chat.completions.create({
@@ -145,7 +181,7 @@ const main = async () => {
 
     const finalContent = finalResponse.choices[0].message.content;
 
-    console.log("Final answer:", formatAnswer(finalContent));
+    console.log("\nFinal answer:", formatAnswer(finalContent));
 
     return;
   }

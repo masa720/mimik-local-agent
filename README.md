@@ -62,7 +62,7 @@ Tool result: 84
 Final answer: 84
 ```
 
-Run the lint and formatting checks:
+Run the lint, type, and formatting checks:
 
 ```bash
 npm run check
@@ -75,7 +75,7 @@ The OpenAI JavaScript SDK uses `MIMOE_BASE_URL` to send requests to the local mi
 The flow is:
 
 1. Send the question and the `calculate` tool definition to the model.
-2. If the model requests a calculation, execute it in Node.js. The tool supports addition, subtraction, multiplication, and division.
+2. If the model requests a calculation, validate its arguments and execute it in Node.js. The tool supports addition, subtraction, multiplication, and division.
 3. Reuse the result if the same calculation is requested again in that response, while returning a tool message for every tool-call ID.
 4. Send the tool results to the model and request its final answer.
 
@@ -107,4 +107,4 @@ With a locally loaded model, this example does not call a cloud LLM API.
 
 ## Limitations
 
-This example handles one question and one round of tool calls per run. Model behavior can vary, including whether it calls the tool and how it words the final answer. A larger application would validate model-supplied tool arguments and support a multi-turn interactive CLI.
+This example handles one question and one round of tool calls per run. Model behavior can vary, including whether it calls the tool and how it words the final answer. A larger application would support multiple conversations in the CLI and handle invalid model responses better.
